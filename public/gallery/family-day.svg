@@ -1,0 +1,19 @@
+<svg width="1600" height="1066" viewBox="0 0 1600 1066" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1066" fill="#E8EEF5"/>
+  <rect y="690" width="1600" height="376" fill="#688454"/>
+  <circle cx="1320" cy="170" r="84" fill="#F2D39A"/>
+  <path d="M0 712C172 642 324 620 470 648C632 680 754 758 910 748C1090 736 1220 632 1390 630C1484 628 1554 652 1600 684V1066H0V712Z" fill="#56733F"/>
+  <rect x="214" y="452" width="242" height="228" rx="28" fill="#102A43"/>
+  <rect x="246" y="484" width="176" height="118" rx="18" fill="#F4F7FB"/>
+  <rect x="272" y="516" width="54" height="54" rx="27" fill="#C79A3B"/>
+  <rect x="340" y="516" width="54" height="54" rx="27" fill="#1F4C73"/>
+  <rect x="732" y="392" width="328" height="278" rx="36" fill="#DCE4ED"/>
+  <rect x="766" y="428" width="260" height="86" rx="22" fill="#FFFFFF"/>
+  <rect x="1122" y="470" width="222" height="208" rx="28" fill="#102A43"/>
+  <rect x="1154" y="506" width="158" height="98" rx="16" fill="#F4F7FB"/>
+  <circle cx="622" cy="764" r="72" fill="#F7C97C"/>
+  <circle cx="828" cy="802" r="64" fill="#C79A3B"/>
+  <circle cx="996" cy="774" r="72" fill="#1F4C73"/>
+  <rect x="572" y="820" width="520" height="112" rx="56" fill="#FFFFFF" fill-opacity="0.2"/>
+  <text x="118" y="146" fill="#102A43" font-family="Arial, sans-serif" font-size="64" font-weight="700">Local One Family Day</text>
+</svg>
