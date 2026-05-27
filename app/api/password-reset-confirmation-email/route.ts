@@ -1,29 +1,27 @@
 import { NextResponse } from "next/server";
-import { createHiringAlertConfirmationEmail } from "@/lib/email-templates";
+import { createPasswordResetConfirmationEmail } from "@/lib/email-templates";
 import { sendResendEmail } from "@/lib/resend";
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       email?: string;
-      siteName?: string;
     };
 
     const email = body.email?.trim();
-    const siteName = body.siteName?.trim();
 
-    if (!email || !siteName) {
+    if (!email) {
       return NextResponse.json(
-        { error: "Email and site name are required." },
+        { error: "Email is required." },
         { status: 400 }
       );
     }
 
-    const template = createHiringAlertConfirmationEmail(siteName);
+    const template = createPasswordResetConfirmationEmail();
 
     await sendResendEmail({
       to: email,
-      subject: `Local One hiring alerts for ${siteName}`,
+      subject: "Local One password reset requested",
       text: template.text,
       html: template.html
     });
@@ -31,11 +29,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") {
-      console.error("[Hiring alert email route]", error);
+      console.error("[Password reset confirmation email route]", error);
     }
 
     return NextResponse.json(
-      { error: "We could not send the hiring alert confirmation right now." },
+      { error: "We could not send the password reset confirmation right now." },
       { status: 500 }
     );
   }

@@ -48,6 +48,22 @@ export function ForgotPasswordForm() {
       return;
     }
 
+    const confirmationResponse = await fetch("/api/password-reset-confirmation-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: trimmedEmail
+      })
+    });
+
+    if (!confirmationResponse.ok) {
+      logDevelopmentError("Password reset confirmation email", null, {
+        email: trimmedEmail
+      });
+    }
+
     setStatus("success");
     setMessage("If an account exists for that email, a password reset link has been sent.");
     setSubmitting(false);

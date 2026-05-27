@@ -31,23 +31,23 @@ export default function HomePage() {
 
   const heroSlides = [
     {
+      image: "/gallery/ballpark.jpg",
+      title: "Take Me Out To The Ballgame",
+      subtitle: "Local One members enjoying a day at the ballpark together."
+    },
+    {
+      image: "/gallery/mdi.jpg",
+      title: "Happy Workers, Happy Union",
+      subtitle:
+        "This site reinforces professional identity while keeping internal resources protected for approved members."
+    },
+    {
       image: "/gallery/Local1basketball.jpeg",
       title: "Community-first union power built around real people.",
       subtitle:
         "Local One protects jobs, builds leadership, and keeps represented officers connected across every shift."
-    },
-    {
-      image: "/gallery/night-out.svg",
-      title: "A stronger public presence for a serious security organization.",
-      subtitle:
-        "Public contracts, site pages, and leadership access make Local One visible and credible to members, families, and employers."
-    },
-    {
-      image: "/gallery/training-workshop.svg",
-      title: "Training, standards, and solidarity are part of the mission.",
-      subtitle:
-        "This site reinforces professional identity while keeping internal resources protected for approved members."
     }
+
   ];
 
   return (

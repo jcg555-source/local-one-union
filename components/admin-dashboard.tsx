@@ -208,7 +208,7 @@ const emptyMemberResourceForm: MemberResourceFormValues = {
   is_active: true
 };
 
-const contractStorageBucket = "contract-files";
+const contractStorageBucket = "contracts";
 const galleryStorageBucket = "gallery";
 const leadershipStorageBucket = "leadership";
 const memberResourcesStorageBucket = "member-resources";
@@ -1112,6 +1112,31 @@ export function AdminDashboard() {
         member_email: targetProfile?.email ?? null
       }
     });
+
+    if (status === "approved" && targetProfile?.email) {
+      const approvalResponse = await fetch("/api/account-approval-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: targetProfile.email,
+          name:
+            [targetProfile.first_name, targetProfile.last_name]
+              .filter(Boolean)
+              .join(" ")
+              .trim() || targetProfile.email
+        })
+      });
+
+      if (!approvalResponse.ok) {
+        logDevelopmentError("Account approval email", null, {
+          memberId: id,
+          email: targetProfile.email
+        });
+      }
+    }
+
     await refreshProfiles();
     setUpdatingProfileId(null);
   }
@@ -1358,6 +1383,15 @@ export function AdminDashboard() {
         .toLowerCase()
         .replace(/[^a-z0-9.-]+/g, "-");
       const filePath = `${trimmedSiteId}/${Date.now()}-${safeFileName}`;
+      const uploadContext = {
+        bucketName: contractStorageBucket,
+        fileName: contractPdfFile.name,
+        normalizedFilePath: filePath,
+        fileType: contractPdfFile.type,
+        authenticatedUserId: session.id ?? null,
+        adminProfileRole: session.role,
+        adminProfileStatus: session.status
+      };
 
       const { error: uploadError } = await supabase.storage
         .from(contractStorageBucket)
@@ -1368,12 +1402,14 @@ export function AdminDashboard() {
         });
 
       if (uploadError) {
-        logDevelopmentError("Admin contract upload", uploadError, { trimmedSiteId });
+        logDevelopmentError("Admin contract upload", uploadError, uploadContext);
         setContractsError(
-          getFriendlySupabaseMessage({
-            action: "upload the contract file",
-            audience: "admin"
-          })
+          process.env.NODE_ENV !== "production"
+            ? `Contract upload failed: ${uploadError.message}`
+            : getFriendlySupabaseMessage({
+                action: "upload the contract file",
+                audience: "admin"
+              })
         );
         setUploadingContractFile(false);
         return;

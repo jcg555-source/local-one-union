@@ -1,7 +1,9 @@
 import "server-only";
 
 const resendApiUrl = "https://api.resend.com/emails";
-const defaultFromEmail = "Local One Security Union <onboarding@resend.dev>";
+const developmentFromEmail = "onboarding@resend.dev";
+// TODO: Switch to "Local One <noreply@localonesou.org>" after the Local One domain is verified in Resend.
+const productionFromEmail = "Local One Security Union <onboarding@resend.dev>";
 
 type SendEmailInput = {
   from?: string;
@@ -22,10 +24,42 @@ export function getUnionContactEmail() {
   return unionContactEmail;
 }
 
+export function getWebsiteUrl() {
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+    "https://localoneunion.org";
+
+  if (configuredUrl.startsWith("http://") || configuredUrl.startsWith("https://")) {
+    return configuredUrl;
+  }
+
+  return `https://${configuredUrl}`;
+}
+
+function getResendFromEmail() {
+  return process.env.NODE_ENV === "production"
+    ? productionFromEmail
+    : developmentFromEmail;
+}
+
 export async function sendResendEmail(input: SendEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
+  const runtimeLabel = process.env.VERCEL ? "vercel" : "localhost";
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[Resend] email configuration check", {
+      runtime: runtimeLabel,
+      apiKeyLoaded: Boolean(apiKey),
+      from: input.from ?? getResendFromEmail()
+    });
+  }
 
   if (!apiKey) {
+    console.error("[Resend] RESEND_API_KEY is not configured", {
+      runtime: runtimeLabel,
+      apiKeyLoaded: false
+    });
     throw new Error("RESEND_API_KEY is not configured.");
   }
 
@@ -36,7 +70,7 @@ export async function sendResendEmail(input: SendEmailInput) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      from: input.from ?? defaultFromEmail,
+      from: input.from ?? getResendFromEmail(),
       to: Array.isArray(input.to) ? input.to : [input.to],
       subject: input.subject,
       html: input.html,
@@ -47,6 +81,15 @@ export async function sendResendEmail(input: SendEmailInput) {
 
   if (!response.ok) {
     const errorBody = await response.text();
+    console.error("[Resend] API request failed", {
+      runtime: runtimeLabel,
+      status: response.status,
+      statusText: response.statusText,
+      responseBody: errorBody,
+      from: input.from ?? getResendFromEmail(),
+      to: Array.isArray(input.to) ? input.to : [input.to],
+      subject: input.subject
+    });
     throw new Error(errorBody || "Resend request failed.");
   }
 

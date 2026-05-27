@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  createOrganizingInquiryConfirmationEmail,
+  createOrganizingNotificationEmail
+} from "@/lib/email-templates";
 import { getUnionContactEmail, sendResendEmail } from "@/lib/resend";
 
 export async function POST(request: Request) {
@@ -20,22 +24,26 @@ export async function POST(request: Request) {
       );
     }
 
+    const adminTemplate = createOrganizingNotificationEmail({
+      name,
+      email,
+      siteDescription
+    });
+    const confirmationTemplate = createOrganizingInquiryConfirmationEmail(name);
+
     await sendResendEmail({
       to: getUnionContactEmail(),
       subject: `New Organizing Inquiry from ${name}`,
       replyTo: email,
-      text:
-        `A new organizing inquiry was submitted.\n\n` +
-        `Name: ${name}\n` +
-        `Email: ${email}\n\n` +
-        `Site description:\n${siteDescription}`,
-      html: `
-        <h2>New Organizing Inquiry</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Site description:</strong></p>
-        <p>${siteDescription.replace(/\n/g, "<br />")}</p>
-      `
+      text: adminTemplate.text,
+      html: adminTemplate.html
+    });
+
+    await sendResendEmail({
+      to: email,
+      subject: "Local One received your organizing inquiry",
+      text: confirmationTemplate.text,
+      html: confirmationTemplate.html
     });
 
     return NextResponse.json({ ok: true });
