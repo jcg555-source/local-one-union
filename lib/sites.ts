@@ -11,6 +11,7 @@ type SupabaseSiteRow = {
   name: string | null;
   slug: string | null;
   employer: string | null;
+  visibility: "public" | "member" | null;
   address: string | null;
   city: string | null;
   state: string | null;
@@ -40,6 +41,7 @@ type SiteCollectionResult = {
 
 type SiteDetailResult = {
   error?: string;
+  restricted?: boolean;
   site: Site | null;
   source: "supabase" | "fallback";
 };
@@ -80,6 +82,7 @@ function mapSupabaseSite(row: SupabaseSiteRow): Site | null {
     slug,
     name: row.name?.trim() || fallback?.name || "Unnamed Site",
     employer: row.employer?.trim() || fallback?.employer || "Local One Employer",
+    visibility: row.visibility ?? fallback?.visibility ?? "member",
     address: fullAddress,
     streetAddress,
     city: city || undefined,
@@ -122,36 +125,41 @@ function getFallbackSites(): Site[] {
   return fallbackSites;
 }
 
-export async function getPublicSites(): Promise<SiteCollectionResult> {
+function getFallbackPublicSites(): Site[] {
+  return fallbackSites.filter((site) => site.visibility === "public");
+}
+
+function getFallbackSiteDetail(slug: string): SiteDetailResult {
+  const fallbackSite = fallbackSiteBySlug.get(slug) ?? null;
+
+  if (!fallbackSite) {
+    return {
+      site: null,
+      source: "fallback"
+    };
+  }
+
+  if (fallbackSite.visibility !== "public") {
+    return {
+      site: null,
+      source: "fallback",
+      restricted: true
+    };
+  }
+
+  return {
+    site: fallbackSite,
+    source: "fallback"
+  };
+}
+
+async function loadLatestContracts() {
   if (!supabase) {
     return {
-      sites: getFallbackSites(),
-      source: "fallback",
-      error: "Site information is temporarily unavailable, so backup content is being shown."
+      error: null as string | null,
+      latestContractBySiteId: new Map<string, SupabaseContractRow>()
     };
   }
-
-  const { data, error } = await supabase
-    .from("sites")
-    .select(
-      "id, name, slug, employer, address, city, state, zipcode, intro, representative, lat, lng, archived, is_active"
-    )
-    .order("name", { ascending: true });
-
-  if (error) {
-    logDevelopmentError("Public sites load", error);
-    return {
-      sites: getFallbackSites(),
-      source: "fallback",
-      error: getFriendlySupabaseMessage({
-        action: "load site information"
-      })
-    };
-  }
-
-  const siteRows = ((data as SupabaseSiteRow[] | null) ?? []).filter(
-    (row) => row.archived !== true && row.is_active !== false
-  );
 
   const { data: contractData, error: contractError } = await supabase
     .from("contracts")
@@ -165,6 +173,53 @@ export async function getPublicSites(): Promise<SiteCollectionResult> {
     }
   }
 
+  return {
+    error: contractError ? getFriendlySupabaseMessage({ action: "load contract information" }) : null,
+    latestContractBySiteId
+  };
+}
+
+async function fetchActiveSites({
+  visibility
+}: {
+  visibility?: "public" | "member";
+} = {}): Promise<SiteCollectionResult> {
+  if (!supabase) {
+    return {
+      sites: visibility === "public" ? getFallbackPublicSites() : getFallbackSites(),
+      source: "fallback",
+      error: "Site information is temporarily unavailable, so backup content is being shown."
+    };
+  }
+
+  const query = supabase
+    .from("sites")
+    .select(
+      "id, name, slug, employer, visibility, address, city, state, zipcode, intro, representative, lat, lng, archived, is_active"
+    )
+    .order("name", { ascending: true });
+
+  const { data, error } = visibility
+    ? await query.eq("visibility", visibility)
+    : await query;
+
+  if (error) {
+    logDevelopmentError("Sites load", error, { visibility });
+    return {
+      sites: visibility === "public" ? getFallbackPublicSites() : getFallbackSites(),
+      source: "fallback",
+      error: getFriendlySupabaseMessage({
+        action: "load site information"
+      })
+    };
+  }
+
+  const siteRows = ((data as SupabaseSiteRow[] | null) ?? []).filter(
+    (row) => row.archived !== true && row.is_active !== false
+  );
+
+  const { latestContractBySiteId, error: contractError } = await loadLatestContracts();
+
   const mappedSites = siteRows
     .map((row) => {
       const site = mapSupabaseSite(row);
@@ -177,24 +232,27 @@ export async function getPublicSites(): Promise<SiteCollectionResult> {
 
   if (mappedSites.length === 0) {
     return {
-      sites: getFallbackSites(),
+      sites: visibility === "public" ? getFallbackPublicSites() : getFallbackSites(),
       source: "fallback",
-      error: "No active Supabase sites were available, so fallback site data is being shown."
+      error: "No active site records were available, so fallback site data is being shown."
     };
   }
 
   return {
     sites: mappedSites,
     source: "supabase",
-    error: contractError?.message
+    error: contractError ?? undefined
   };
+}
+
+export async function getPublicSites(): Promise<SiteCollectionResult> {
+  return fetchActiveSites({ visibility: "public" });
 }
 
 export async function getPublicSiteBySlug(slug: string): Promise<SiteDetailResult> {
   if (!supabase) {
     return {
-      site: fallbackSiteBySlug.get(slug) ?? null,
-      source: "fallback",
+      ...getFallbackSiteDetail(slug),
       error: "This site page is temporarily unavailable, so backup content is being shown."
     };
   }
@@ -202,7 +260,7 @@ export async function getPublicSiteBySlug(slug: string): Promise<SiteDetailResul
   const { data, error } = await supabase
     .from("sites")
     .select(
-      "id, name, slug, employer, address, city, state, zipcode, intro, representative, lat, lng, archived, is_active"
+      "id, name, slug, employer, visibility, address, city, state, zipcode, intro, representative, lat, lng, archived, is_active"
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -210,8 +268,88 @@ export async function getPublicSiteBySlug(slug: string): Promise<SiteDetailResul
   if (error) {
     logDevelopmentError("Public site detail load", error, { slug });
     return {
+      ...getFallbackSiteDetail(slug),
+      error: getFriendlySupabaseMessage({
+        action: "load this site page"
+      })
+    };
+  }
+
+  if (!data) {
+    return fallbackSiteBySlug.has(slug)
+      ? getFallbackSiteDetail(slug)
+      : { site: null, source: "supabase" };
+  }
+
+  const siteRow = data as SupabaseSiteRow;
+
+  if (siteRow.archived === true || siteRow.is_active === false) {
+    return fallbackSiteBySlug.has(slug)
+      ? getFallbackSiteDetail(slug)
+      : { site: null, source: "supabase" };
+  }
+
+  if ((siteRow.visibility ?? "member") !== "public") {
+    return {
+      site: null,
+      source: "supabase",
+      restricted: true
+    };
+  }
+
+  const mappedSite = mapSupabaseSite(siteRow);
+
+  if (!mappedSite) {
+    return fallbackSiteBySlug.has(slug)
+      ? getFallbackSiteDetail(slug)
+      : { site: null, source: "supabase" };
+  }
+
+  const { data: contractData, error: contractError } = await supabase
+    .from("contracts")
+    .select("id, site_id, title, file_url, effective_date, expiration_date")
+    .eq("site_id", siteRow.id)
+    .order("effective_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return {
+    site: mergeContractIntoSite(
+      mappedSite,
+      (contractData as SupabaseContractRow | null) ?? null
+    ),
+    source: "supabase",
+    error: contractError
+      ? getFriendlySupabaseMessage({ action: "load contract information" })
+      : undefined
+  };
+}
+
+export async function getAllActiveSites(): Promise<SiteCollectionResult> {
+  return fetchActiveSites();
+}
+
+export async function getActiveSiteBySlug(slug: string): Promise<SiteDetailResult> {
+  if (!supabase) {
+    return {
       site: fallbackSiteBySlug.get(slug) ?? null,
-      source: "fallback",
+      source: fallbackSiteBySlug.has(slug) ? "fallback" : "supabase"
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("sites")
+    .select(
+      "id, name, slug, employer, visibility, address, city, state, zipcode, intro, representative, lat, lng, archived, is_active"
+    )
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    logDevelopmentError("Active site detail load", error, { slug });
+    return {
+      site: fallbackSiteBySlug.get(slug) ?? null,
+      source: fallbackSiteBySlug.has(slug) ? "fallback" : "supabase",
       error: getFriendlySupabaseMessage({
         action: "load this site page"
       })
@@ -229,8 +367,8 @@ export async function getPublicSiteBySlug(slug: string): Promise<SiteDetailResul
 
   if (siteRow.archived === true || siteRow.is_active === false) {
     return {
-      site: fallbackSiteBySlug.get(slug) ?? null,
-      source: fallbackSiteBySlug.has(slug) ? "fallback" : "supabase"
+      site: null,
+      source: "supabase"
     };
   }
 
@@ -238,8 +376,8 @@ export async function getPublicSiteBySlug(slug: string): Promise<SiteDetailResul
 
   if (!mappedSite) {
     return {
-      site: fallbackSiteBySlug.get(slug) ?? null,
-      source: fallbackSiteBySlug.has(slug) ? "fallback" : "supabase"
+      site: null,
+      source: "supabase"
     };
   }
 
@@ -257,6 +395,8 @@ export async function getPublicSiteBySlug(slug: string): Promise<SiteDetailResul
       (contractData as SupabaseContractRow | null) ?? null
     ),
     source: "supabase",
-    error: contractError?.message
+    error: contractError
+      ? getFriendlySupabaseMessage({ action: "load contract information" })
+      : undefined
   };
 }

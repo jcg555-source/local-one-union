@@ -178,7 +178,7 @@ export function createHiringAlertConfirmationEmail(siteName: string): EmailTempl
     title: "You are confirmed for hiring updates",
     intro: "Local One has added your email to the hiring alert list you requested.",
     confirmation: `You are now signed up to receive hiring alerts for ${siteName}.`,
-    highlightLine: "Local One branded email template",
+    highlightLine: "You Protect People, We Protect You.",
     nextSteps: [
       "We will email you when this employer begins hiring or posting new opportunities.",
       "Keep an eye on your inbox for future updates from Local One Security Union.",

@@ -60,6 +60,7 @@ type AdminSite = {
   name: string | null;
   slug: string | null;
   employer: string | null;
+  visibility: "public" | "member" | null;
   address: string | null;
   city: string | null;
   state: string | null;
@@ -118,6 +119,7 @@ type SiteFormValues = {
   name: string;
   slug: string;
   employer: string;
+  visibility: "public" | "member";
   address: string;
   city: string;
   state: string;
@@ -165,6 +167,7 @@ const emptySiteForm: SiteFormValues = {
   name: "",
   slug: "",
   employer: "",
+  visibility: "member",
   address: "",
   city: "",
   state: "",
@@ -734,7 +737,7 @@ export function AdminDashboard() {
     const { data, error } = await supabase
       .from("sites")
       .select(
-        "id, name, slug, employer, address, city, state, zipcode, intro, representative, lat, lng, archived, is_active, created_at"
+        "id, name, slug, employer, visibility, address, city, state, zipcode, intro, representative, lat, lng, archived, is_active, created_at"
       )
       .order("name", { ascending: true });
 
@@ -990,6 +993,7 @@ export function AdminDashboard() {
       name: site.name ?? "",
       slug: site.slug ?? "",
       employer: site.employer ?? "",
+      visibility: site.visibility === "public" ? "public" : "member",
       address: site.address ?? "",
       city: site.city ?? "",
       state: site.state ?? "",
@@ -1218,6 +1222,7 @@ export function AdminDashboard() {
       name: siteForm.name.trim(),
       slug: slugifySiteName(siteForm.slug),
       employer: siteForm.employer.trim(),
+      visibility: siteForm.visibility,
       address: siteForm.address.trim(),
       city: siteForm.city.trim(),
       state: siteForm.state.trim().toUpperCase(),
@@ -1232,6 +1237,7 @@ export function AdminDashboard() {
       !payload.name ||
       !payload.slug ||
       !payload.employer ||
+      !payload.visibility ||
       !payload.address ||
       !payload.city ||
       !payload.state ||
@@ -1280,6 +1286,7 @@ export function AdminDashboard() {
         slug: payload.slug,
         name: payload.name,
         employer: payload.employer,
+        visibility: payload.visibility,
         address: payload.address,
         city: payload.city,
         state: payload.state,
@@ -2428,6 +2435,25 @@ export function AdminDashboard() {
                   />
                 </label>
                 <label className="block">
+                  <FieldLabel>Visibility</FieldLabel>
+                  <select
+                    value={siteForm.visibility}
+                    onChange={(event) =>
+                      setSiteForm((current) => ({
+                        ...current,
+                        visibility: event.target.value === "public" ? "public" : "member"
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-union-slate bg-white px-4 py-3 text-sm outline-none transition focus:border-union-gold"
+                  >
+                    <option value="member">Member-only</option>
+                    <option value="public">Public</option>
+                  </select>
+                  <p className="mt-2 text-xs text-union-steel">
+                    New sites default to member-only unless you choose public access.
+                  </p>
+                </label>
+                <label className="block">
                   <FieldLabel>Representative</FieldLabel>
                   <input
                     type="text"
@@ -2614,6 +2640,9 @@ export function AdminDashboard() {
                               {site.employer || "No employer"} • {site.slug || "No slug"}
                             </p>
                             <p className="text-sm text-union-steel">
+                              Visibility: {site.visibility === "public" ? "Public" : "Member-only"}
+                            </p>
+                            <p className="text-sm text-union-steel">
                               {composeSiteAddress(site) || "No address"}
                             </p>
                             <p className="text-sm text-union-steel">
@@ -2670,6 +2699,9 @@ export function AdminDashboard() {
                             </p>
                             <p className="text-sm text-union-steel">
                               {site.employer || "No employer"} • {site.slug || "No slug"}
+                            </p>
+                            <p className="text-sm text-union-steel">
+                              Visibility: {site.visibility === "public" ? "Public" : "Member-only"}
                             </p>
                             <p className="text-sm text-union-steel">
                               {composeSiteAddress(site) || "No address"}

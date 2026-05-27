@@ -5,6 +5,7 @@ export type Site = {
   slug: string;
   name: string;
   employer: string;
+  visibility: "public" | "member";
   address: string;
   streetAddress?: string;
   city?: string;
@@ -58,6 +59,7 @@ export const sites: Site[] = [
     slug: "new-york-university",
     name: "New York University",
     employer: "New York University",
+    visibility: "public",
     address: "7 Washington Place, New York, NY 10003",
     intro:
       "New York University officers protect a high-traffic mixed-use properties with strong community relations and visible public service 24/7.",
@@ -72,6 +74,7 @@ export const sites: Site[] = [
     slug: "manhattan-college",
     name: "Manhattan College",
     employer: "Manhattan College",
+    visibility: "member",
     address: "4513 Manhattan College Parkway, Bronx, NY 10471",
     intro:
       "Manhattan College officers ensure safety and security across campus, providing a visible presence and rapid response capabilities.",
@@ -86,6 +89,7 @@ export const sites: Site[] = [
     slug: "wagner-college",
     name: "Wagner College",
     employer: "Wagner College",
+    visibility: "member",
     address: "1 Campus Rd, Staten Island, NY 10301",
     intro:
       "Wagner College officers support campus safety, emergency response coordination, and community engagement initiatives.",
@@ -100,6 +104,7 @@ export const sites: Site[] = [
     slug: "nyu-langone",
     name: "NYU Langone Health",
     employer: "NYU Langone Health",
+    visibility: "public",
     address: "550 First Avenue, New York, NY 10016",
     intro:
       "NYU Langone officers provide security and support services across a major medical campus, ensuring patient and staff safety.",
@@ -114,6 +119,7 @@ export const sites: Site[] = [
     slug: "nyu-brooklyn",
     name: "NYU Brooklyn",
     employer: "NYU Brooklyn",
+    visibility: "member",
     address: "550 First Avenue, Brooklyn, NY 11201",
     intro:
       "NYU Brooklyn officers provide security and support services across a major medical campus, ensuring patient and staff safety.",
@@ -128,6 +134,7 @@ export const sites: Site[] = [
     slug: "staten-island-university-hospital",
     name: "Staten Island University Hospital",
     employer: "Staten Island University Hospital",
+    visibility: "member",
     address: "475 Seaview Avenue, Staten Island, NY 10305",
     intro:
       "Staten Island University Hospital officers provide comprehensive security services across a large medical campus, ensuring the safety of patients and staff.",
@@ -142,6 +149,7 @@ export const sites: Site[] = [
     slug: "whitney-museum",
     name: "Whitney Museum",
     employer: "Whitney Museum",
+    visibility: "member",
     address: "99 Gansevoort St, New York, NY 10014",
     intro:
       "Whitney Museum officers provide security and support services across a major cultural institution, ensuring the safety of visitors and staff.",
@@ -156,6 +164,7 @@ export const sites: Site[] = [
     slug: "snug-harbor-cultural-center",
     name: "Snug Harbor Cultural Center",
     employer: "Snug Harbor Cultural Center",
+    visibility: "member",
     address: "1000 Richmond Terrace, Staten Island, NY 10301",
     intro:
       "Snug Harbor Cultural Center officers provide security and support services across a major cultural institution, ensuring the safety of visitors and staff.",
