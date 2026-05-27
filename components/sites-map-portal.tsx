@@ -58,7 +58,7 @@ export function SitesMapPortal() {
         />
         <div className="mt-8 card-panel p-8">
           <h2 className="text-2xl font-semibold text-union-navy">
-            This site is available to approved Local One members only.
+            The full sites map is available to approved Local One members only.
           </h2>
           <p className="mt-4 text-sm leading-7 text-union-steel">
             Public visitors can still view the public site pages for New York

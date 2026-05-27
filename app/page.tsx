@@ -1,33 +1,13 @@
 import { BrandLockup } from "@/components/brand-lockup";
 import { HomeHeroCarousel } from "@/components/home-hero-carousel";
 import { HomePortalCallout } from "@/components/home-portal-callout";
-import type { Route } from "next";
+import { HomeSiteAccess, HomeSiteHeroButton } from "@/components/home-site-access";
 import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
 import { leaders, newsItems, sites } from "@/lib/data";
 
 export default function HomePage() {
-  const homepageCards: Array<{
-    href: Route;
-    label: string;
-    value: number;
-  }> = [
-    {
-      href: "/sites-map",
-      label: "Public Sites",
-      value: sites.length
-    },
-    {
-      href: "/leadership",
-      label: "Leadership",
-      value: leaders.length
-    },
-    {
-      href: "/news",
-      label: "News Updates",
-      value: newsItems.length
-    }
-  ];
+  const publicSites = sites.filter((site) => site.visibility === "public");
 
   const heroSlides = [
     {
@@ -71,14 +51,7 @@ export default function HomePage() {
                   Local One stands with security officers through public contract
                   visibility, organized representation, and protected member access.
                 </p>
-                <div className="flex flex-wrap gap-4">
-                  <Link
-                    href="/sites-map"
-                    className="rounded-full bg-union-gold px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-union-navy shadow-lg shadow-black/20 transition hover:translate-y-[-1px]"
-                  >
-                    Explore Sites Map
-                  </Link>
-                </div>
+                <HomeSiteHeroButton />
               </div>
             </div>
           </HomeHeroCarousel>
@@ -87,24 +60,50 @@ export default function HomePage() {
 
       <section className="section-band pt-0 pb-10 sm:pb-12">
         <div className="container-shell relative z-10">
-          <div className="grid gap-4 sm:grid-cols-3">
-            {homepageCards.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="card-panel gold-ring group block cursor-pointer p-6 transition duration-200 hover:-translate-y-1 hover:border-union-gold/50 hover:shadow-[0_20px_45px_rgba(16,42,67,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-union-gold focus-visible:ring-offset-2"
-                aria-label={`Go to ${item.label}`}
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-union-gold">
-                  {item.label}
+          <HomeSiteAccess
+            leadersCount={leaders.length}
+            newsCount={newsItems.length}
+            publicSitesCount={publicSites.length}
+            totalSitesCount={sites.length}
+          />
+        </div>
+      </section>
+
+      <section id="public-sites" className="section-band pt-0 pb-10 sm:pb-12">
+        <div className="container-shell relative z-10">
+          <SectionHeading
+            eyebrow="Public Site Pages"
+            title="Two represented sites remain publicly visible."
+            copy="Public visitors can review these site pages and contracts without opening the full member-only sites map."
+          />
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            {publicSites.map((site) => (
+              <article key={site.slug} className="card-panel flex h-full flex-col p-6">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-union-gold">
+                  {site.employer}
                 </p>
-                <p className="mt-3 text-4xl font-semibold text-union-navy">
-                  {item.value}
+                <h3 className="mt-3 text-2xl font-semibold text-union-navy">
+                  {site.name}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-union-steel">{site.address}</p>
+                <p className="mt-4 flex-1 text-sm leading-7 text-union-steel">
+                  {site.intro}
                 </p>
-                <p className="mt-3 text-sm font-medium text-union-steel transition group-hover:text-union-navy">
-                  Explore section
-                </p>
-              </Link>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    href={`/sites/${site.slug}`}
+                    className="rounded-full bg-union-navy px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#173a5b]"
+                  >
+                    View Site Page
+                  </Link>
+                  <a
+                    href={site.contractPath}
+                    className="rounded-full border border-union-slate px-4 py-2 text-sm font-semibold text-union-navy transition hover:border-union-gold hover:text-union-gold"
+                  >
+                    View Contract
+                  </a>
+                </div>
+              </article>
             ))}
           </div>
         </div>
