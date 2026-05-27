@@ -11,6 +11,9 @@ export default async function SiteDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[Local One Sites] page request", { requestedSlug: slug });
+  }
   const { site, source, error, restricted } = await getPublicSiteBySlug(slug);
 
   if (restricted) {
@@ -19,6 +22,15 @@ export default async function SiteDetailPage({
 
   if (!site) {
     notFound();
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[Local One Sites] site id passed to hiring form", {
+      requestedSlug: slug,
+      source,
+      siteId: site.id ?? null,
+      siteSlug: site.slug
+    });
   }
 
   return (

@@ -19,8 +19,8 @@ export type Site = {
   contractEffectiveDate?: string;
   contractExpirationDate?: string;
   isActive?: boolean;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   coordinates: {
     top: string;
     left: string;

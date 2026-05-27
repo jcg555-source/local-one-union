@@ -19,11 +19,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const isApprovedAdmin = session.role === "admin" && session.status === "approved";
   const isApprovedMember =
     session.role === "member" && session.status === "approved";
-  const canViewSitesMap = isApprovedAdmin || isApprovedMember;
   const dashboardLinks: Array<{ href: Route; label: string }> = [];
-  const visibleNavLinks = navLinks.filter(
-    (item) => item.href !== "/sites-map" || canViewSitesMap
-  );
+  const visibleNavLinks = navLinks;
 
   if (isApprovedAdmin) {
     dashboardLinks.push({ href: "/admin", label: "Admin Dashboard" });
@@ -215,11 +212,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
               {(isApprovedMember || isApprovedAdmin) ? (
                 <Link href="/portal" className="hover:text-white">
                   Member Portal
-                </Link>
-              ) : null}
-              {canViewSitesMap ? (
-                <Link href="/sites-map" className="hover:text-white">
-                  Sites Map
                 </Link>
               ) : null}
               {isApprovedAdmin ? (

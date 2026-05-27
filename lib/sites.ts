@@ -49,6 +49,19 @@ type SiteDetailResult = {
 const fallbackSiteBySlug = new Map(
   fallbackSites.map((site) => [site.slug, site] as const)
 );
+const siteSlugAliases = new Map<string, string>([
+  ["nyu-langone-health", "nyu-langone"]
+]);
+
+function resolveSiteSlugAlias(slug: string) {
+  return siteSlugAliases.get(slug) ?? slug;
+}
+
+function logSiteLookup(message: string, details: Record<string, unknown>) {
+  if (process.env.NODE_ENV !== "production") {
+    console.info(`[Local One Sites] ${message}`, details);
+  }
+}
 
 function mapSupabaseSite(row: SupabaseSiteRow): Site | null {
   const slug = row.slug?.trim();
@@ -72,10 +85,6 @@ function mapSupabaseSite(row: SupabaseSiteRow): Site | null {
     }) ||
     fallback?.address ||
     "Address unavailable";
-
-  if (latitude === null || longitude === null) {
-    return null;
-  }
 
   return {
     id: row.id,
@@ -130,7 +139,8 @@ function getFallbackPublicSites(): Site[] {
 }
 
 function getFallbackSiteDetail(slug: string): SiteDetailResult {
-  const fallbackSite = fallbackSiteBySlug.get(slug) ?? null;
+  const normalizedSlug = resolveSiteSlugAlias(slug);
+  const fallbackSite = fallbackSiteBySlug.get(normalizedSlug) ?? null;
 
   if (!fallbackSite) {
     return {
@@ -250,42 +260,61 @@ export async function getPublicSites(): Promise<SiteCollectionResult> {
 }
 
 export async function getPublicSiteBySlug(slug: string): Promise<SiteDetailResult> {
+  const normalizedSlug = resolveSiteSlugAlias(slug);
+  logSiteLookup("public site lookup requested", {
+    requestedSlug: slug,
+    normalizedSlug
+  });
+
   if (!supabase) {
     return {
-      ...getFallbackSiteDetail(slug),
+      ...getFallbackSiteDetail(normalizedSlug),
       error: "This site page is temporarily unavailable, so backup content is being shown."
     };
   }
 
+  const slugOptions = Array.from(new Set([slug, normalizedSlug]));
   const { data, error } = await supabase
     .from("sites")
     .select(
       "id, name, slug, employer, visibility, address, city, state, zipcode, intro, representative, lat, lng, archived, is_active"
     )
-    .eq("slug", slug)
-    .maybeSingle();
+    .in("slug", slugOptions)
+    .limit(2);
 
   if (error) {
-    logDevelopmentError("Public site detail load", error, { slug });
+    logDevelopmentError("Public site detail load", error, { slug: normalizedSlug });
     return {
-      ...getFallbackSiteDetail(slug),
+      ...getFallbackSiteDetail(normalizedSlug),
       error: getFriendlySupabaseMessage({
         action: "load this site page"
       })
     };
   }
 
-  if (!data) {
-    return fallbackSiteBySlug.has(slug)
-      ? getFallbackSiteDetail(slug)
+  const matchingRows = (data as SupabaseSiteRow[] | null) ?? [];
+  const siteRow =
+    matchingRows.find((row) => row.slug?.trim() === slug) ??
+    matchingRows.find((row) => row.slug?.trim() === normalizedSlug) ??
+    null;
+
+  logSiteLookup("public site Supabase result", {
+    requestedSlug: slug,
+    normalizedSlug,
+    matchingRows,
+    selectedSiteId: siteRow?.id ?? null,
+    selectedSiteSlug: siteRow?.slug ?? null
+  });
+
+  if (!siteRow) {
+    return fallbackSiteBySlug.has(normalizedSlug)
+      ? getFallbackSiteDetail(normalizedSlug)
       : { site: null, source: "supabase" };
   }
 
-  const siteRow = data as SupabaseSiteRow;
-
   if (siteRow.archived === true || siteRow.is_active === false) {
-    return fallbackSiteBySlug.has(slug)
-      ? getFallbackSiteDetail(slug)
+    return fallbackSiteBySlug.has(normalizedSlug)
+      ? getFallbackSiteDetail(normalizedSlug)
       : { site: null, source: "supabase" };
   }
 
@@ -300,8 +329,8 @@ export async function getPublicSiteBySlug(slug: string): Promise<SiteDetailResul
   const mappedSite = mapSupabaseSite(siteRow);
 
   if (!mappedSite) {
-    return fallbackSiteBySlug.has(slug)
-      ? getFallbackSiteDetail(slug)
+    return fallbackSiteBySlug.has(normalizedSlug)
+      ? getFallbackSiteDetail(normalizedSlug)
       : { site: null, source: "supabase" };
   }
 
@@ -330,40 +359,59 @@ export async function getAllActiveSites(): Promise<SiteCollectionResult> {
 }
 
 export async function getActiveSiteBySlug(slug: string): Promise<SiteDetailResult> {
+  const normalizedSlug = resolveSiteSlugAlias(slug);
+  logSiteLookup("active site lookup requested", {
+    requestedSlug: slug,
+    normalizedSlug
+  });
+
   if (!supabase) {
     return {
-      site: fallbackSiteBySlug.get(slug) ?? null,
-      source: fallbackSiteBySlug.has(slug) ? "fallback" : "supabase"
+      site: fallbackSiteBySlug.get(normalizedSlug) ?? null,
+      source: fallbackSiteBySlug.has(normalizedSlug) ? "fallback" : "supabase"
     };
   }
 
+  const slugOptions = Array.from(new Set([slug, normalizedSlug]));
   const { data, error } = await supabase
     .from("sites")
     .select(
       "id, name, slug, employer, visibility, address, city, state, zipcode, intro, representative, lat, lng, archived, is_active"
     )
-    .eq("slug", slug)
-    .maybeSingle();
+    .in("slug", slugOptions)
+    .limit(2);
 
   if (error) {
-    logDevelopmentError("Active site detail load", error, { slug });
+    logDevelopmentError("Active site detail load", error, { slug: normalizedSlug });
     return {
-      site: fallbackSiteBySlug.get(slug) ?? null,
-      source: fallbackSiteBySlug.has(slug) ? "fallback" : "supabase",
+      site: fallbackSiteBySlug.get(normalizedSlug) ?? null,
+      source: fallbackSiteBySlug.has(normalizedSlug) ? "fallback" : "supabase",
       error: getFriendlySupabaseMessage({
         action: "load this site page"
       })
     };
   }
 
-  if (!data) {
+  const matchingRows = (data as SupabaseSiteRow[] | null) ?? [];
+  const siteRow =
+    matchingRows.find((row) => row.slug?.trim() === slug) ??
+    matchingRows.find((row) => row.slug?.trim() === normalizedSlug) ??
+    null;
+
+  logSiteLookup("active site Supabase result", {
+    requestedSlug: slug,
+    normalizedSlug,
+    matchingRows,
+    selectedSiteId: siteRow?.id ?? null,
+    selectedSiteSlug: siteRow?.slug ?? null
+  });
+
+  if (!siteRow) {
     return {
-      site: fallbackSiteBySlug.get(slug) ?? null,
-      source: fallbackSiteBySlug.has(slug) ? "fallback" : "supabase"
+      site: fallbackSiteBySlug.get(normalizedSlug) ?? null,
+      source: fallbackSiteBySlug.has(normalizedSlug) ? "fallback" : "supabase"
     };
   }
-
-  const siteRow = data as SupabaseSiteRow;
 
   if (siteRow.archived === true || siteRow.is_active === false) {
     return {

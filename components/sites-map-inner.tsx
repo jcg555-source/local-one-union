@@ -57,9 +57,14 @@ const mapOptions: google.maps.MapOptions = {
   zoomControl: true
 };
 
-function isValidCoordinate(value: number) {
+function isValidCoordinate(value: number | null) {
   return Number.isFinite(value);
 }
+
+type SiteWithCoordinates = Site & {
+  latitude: number;
+  longitude: number;
+};
 
 function MapFallback({
   message = "Map temporarily unavailable."
@@ -87,7 +92,7 @@ export function SitesMapInner({
       sites.filter(
         (site) =>
           isValidCoordinate(site.latitude) && isValidCoordinate(site.longitude)
-      ),
+      ) as SiteWithCoordinates[],
     [sites]
   );
   const activeSite =

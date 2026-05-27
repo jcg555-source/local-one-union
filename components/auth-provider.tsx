@@ -69,6 +69,12 @@ function mapProfileToPendingMember(profile: SupabaseProfileRow): PendingMember {
   };
 }
 
+function logAuthDebug(message: string, details: Record<string, unknown>) {
+  if (process.env.NODE_ENV !== "production") {
+    console.info(`[Local One Auth] ${message}`, details);
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<SessionState>(defaultSession);
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
@@ -117,6 +123,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
+    logAuthDebug("hydrate session requested", {
+      authUserId: userId,
+      authEmail: email ?? null
+    });
+
     const { data, error } = await supabase
       .from("profiles")
       .select("id, first_name, last_name, email, phone, affiliated_site, status, role")
@@ -124,6 +135,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
 
     if (error) {
+      logAuthDebug("profile fetch error", {
+        authUserId: userId,
+        authEmail: email ?? null,
+        error
+      });
       logDevelopmentError("Local One Auth profile fetch", error, { userId });
       persistSession(defaultSession);
       return {
@@ -137,6 +153,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (!data) {
+      logAuthDebug("profile fetch returned no row", {
+        authUserId: userId,
+        authEmail: email ?? null
+      });
       const noProfileMessage =
         "No profile row was found for this authenticated user id. Check the profiles insert flow.";
 
@@ -149,6 +169,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const profile = data as SupabaseProfileRow;
+    logAuthDebug("profile fetch succeeded", {
+      authUserId: userId,
+      profile
+    });
     const role = profile.role === "admin" ? "admin" : "member";
     const nextSession: SessionState = {
       id: profile.id,
@@ -247,14 +271,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [hydrateSessionFromSupabase]);
 
   async function signIn(email: string, password: string): Promise<AuthResult> {
+    const normalizedEmail = email.trim().toLowerCase();
+
     if (supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password
       });
 
+      logAuthDebug("sign in response", {
+        requestedEmail: normalizedEmail,
+        authUserId: data.user?.id ?? null,
+        authUserEmail: data.user?.email ?? null,
+        authError: error ?? null
+      });
+
       if (error || !data.user) {
-        logDevelopmentError("Local One sign in", error, { email });
+        logDevelopmentError("Local One sign in", error, { email: normalizedEmail });
         return {
           ok: false,
           message: "Invalid email or password."
@@ -271,6 +304,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
 
       if (!profile) {
+        logAuthDebug("sign in profile hydration failed", {
+          requestedEmail: email,
+          authUserId: data.user.id,
+          errorMessage: errorMessage ?? null
+        });
         await supabase.auth.signOut();
         persistSession(defaultSession);
         return {
@@ -295,7 +333,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const account = demoAccounts.find(
-      (item) => item.email === email && item.password === password
+      (item) => item.email === normalizedEmail && item.password === password
     );
 
     if (account) {
@@ -315,7 +353,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    const registered = pendingMembers.find((member) => member.email === email);
+    const registered = pendingMembers.find((member) => member.email === normalizedEmail);
     if (registered && registered.status === "pending") {
       persistSession({
         role: "member",

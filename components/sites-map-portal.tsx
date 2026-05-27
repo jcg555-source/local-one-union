@@ -7,7 +7,7 @@ import { SiteCard } from "@/components/site-card";
 import { SitesMap } from "@/components/sites-map";
 import { useAuth } from "@/components/auth-provider";
 import { Site } from "@/lib/data";
-import { getAllActiveSites } from "@/lib/sites";
+import { getAllActiveSites, getPublicSites } from "@/lib/sites";
 
 export function SitesMapPortal() {
   const { session } = useAuth();
@@ -20,17 +20,15 @@ export function SitesMapPortal() {
     (session.role === "member" || session.role === "admin");
 
   useEffect(() => {
-    if (!isApprovedViewer) {
-      return;
-    }
-
     let active = true;
 
     async function loadSites() {
       setLoading(true);
       setError(null);
 
-      const result = await getAllActiveSites();
+      const result = isApprovedViewer
+        ? await getAllActiveSites()
+        : await getPublicSites();
 
       if (!active) {
         return;
@@ -48,23 +46,32 @@ export function SitesMapPortal() {
     };
   }, [isApprovedViewer]);
 
-  if (!isApprovedViewer) {
-    return (
-      <div className="container-shell py-14 sm:py-20">
-        <SectionHeading
-          eyebrow="Sites Map"
-          title="Local One site locations are available to approved members."
-          copy="Approved members and admins can sign in to view the full represented site map, all worksites, and every contract."
-        />
-        <div className="mt-8 card-panel p-8">
+  return (
+    <div className="container-shell py-14 sm:py-20">
+      <SectionHeading
+        eyebrow="Sites Map"
+        title={
+          isApprovedViewer
+            ? "Interactive map pins for every represented worksite."
+            : "Interactive map pins for Local One's public site pages."
+        }
+        copy={
+          isApprovedViewer
+            ? "Approved Local One members can explore all represented sites, review locations, and open each contract page from one place."
+            : "Public visitors can explore the two public Local One site pages here. Approved members and admins can sign in to view all represented worksites."
+        }
+      />
+      {!isApprovedViewer ? (
+        <div className="mt-6 card-panel p-6">
           <h2 className="text-2xl font-semibold text-union-navy">
             The full sites map is available to approved Local One members only.
           </h2>
-          <p className="mt-4 text-sm leading-7 text-union-steel">
-            Public visitors can still view the public site pages for New York
-            University and NYU Langone Health.
+          <p className="mt-3 text-sm leading-7 text-union-steel">
+            Public visitors can still review New York University and NYU
+            Langone Health below. Approved members and admins can sign in to
+            unlock the full represented site map and every site page.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-wrap gap-3">
             <Link
               href="/login"
               className="rounded-full bg-union-navy px-5 py-3 text-sm font-semibold text-white"
@@ -75,21 +82,11 @@ export function SitesMapPortal() {
               href="/sites/new-york-university"
               className="rounded-full border border-union-slate px-5 py-3 text-sm font-semibold text-union-navy"
             >
-              View Public Sites
+              View Public Site Page
             </Link>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container-shell py-14 sm:py-20">
-      <SectionHeading
-        eyebrow="Sites Map"
-        title="Interactive map pins for every represented worksite."
-        copy="Approved Local One members can explore all represented sites, review locations, and open each contract page from one place."
-      />
+      ) : null}
       {loading ? (
         <p className="mt-6 rounded-2xl bg-union-mist px-4 py-3 text-sm text-union-steel">
           Loading site map...
