@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { createHiringAlertConfirmationEmail } from "@/lib/email-templates";
+import {
+  plainTextHiringAlertTemplate,
+  polishedHiringAlertTemplate
+} from "@/lib/email-templates";
 import { sendResendEmail } from "@/lib/resend";
 
 export async function POST(request: Request) {
@@ -19,13 +22,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const template = createHiringAlertConfirmationEmail(siteName);
-
     await sendResendEmail({
       to: email,
       subject: `Local One hiring alerts for ${siteName}`,
-      text: template.text,
-      html: template.html
+      text: plainTextHiringAlertTemplate(siteName),
+      html: polishedHiringAlertTemplate(siteName)
     });
 
     return NextResponse.json({ ok: true });

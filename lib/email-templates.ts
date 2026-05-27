@@ -10,6 +10,7 @@ type BrandEmailInput = {
   title: string;
   intro: string;
   confirmation: string;
+  highlightLine?: string;
   nextSteps: string[];
   ctaLabel?: string;
   ctaUrl?: string;
@@ -112,6 +113,13 @@ function renderBrandEmail(input: BrandEmailInput): EmailTemplateResult {
                     <p style="margin:0;color:#102a43;font-size:18px;line-height:1.7;font-weight:700;">
                       ${escapeHtml(input.confirmation)}
                     </p>
+                    ${
+                      input.highlightLine
+                        ? `<p style="margin:12px 0 0;color:#b08900;font-size:14px;line-height:1.6;font-weight:700;">
+                            ${escapeHtml(input.highlightLine)}
+                          </p>`
+                        : ""
+                    }
                   </td>
                 </tr>
               </table>
@@ -153,6 +161,7 @@ function renderBrandEmail(input: BrandEmailInput): EmailTemplateResult {
       `${input.title}\n\n` +
       `${input.intro}\n\n` +
       `${input.confirmation}\n\n` +
+      `${input.highlightLine ? `${input.highlightLine}\n\n` : ""}` +
       (input.nextSteps.length > 0
         ? `Next steps:\n${input.nextSteps.map((step) => `- ${step}`).join("\n")}\n`
         : "") +
@@ -169,6 +178,7 @@ export function createHiringAlertConfirmationEmail(siteName: string): EmailTempl
     title: "You are confirmed for hiring updates",
     intro: "Local One has added your email to the hiring alert list you requested.",
     confirmation: `You are now signed up to receive hiring alerts for ${siteName}.`,
+    highlightLine: "Local One branded email template",
     nextSteps: [
       "We will email you when this employer begins hiring or posting new opportunities.",
       "Keep an eye on your inbox for future updates from Local One Security Union.",
@@ -178,6 +188,14 @@ export function createHiringAlertConfirmationEmail(siteName: string): EmailTempl
     ctaUrl: `${getWebsiteUrl()}/sites-map`,
     footerNote: "If you did not request this alert, you can ignore this message."
   });
+}
+
+export function polishedHiringAlertTemplate(siteName: string) {
+  return createHiringAlertConfirmationEmail(siteName).html;
+}
+
+export function plainTextHiringAlertTemplate(siteName: string) {
+  return createHiringAlertConfirmationEmail(siteName).text;
 }
 
 export function createOrganizingInquiryConfirmationEmail(name: string): EmailTemplateResult {
