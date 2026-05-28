@@ -58,7 +58,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section-band pt-0 pb-10 sm:pb-12">
+      <section className="section-band pt-0 pb-8 sm:pb-10">
         <div className="container-shell relative z-10">
           <HomeSiteAccess
             leadersCount={leaders.length}
@@ -69,7 +69,32 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="public-sites" className="section-band pt-0 pb-10 sm:pb-12">
+      <section className="section-band pt-0 pb-8 sm:pb-10">
+        <div className="container-shell relative z-10">
+          <div className="card-panel gold-ring grid gap-6 p-8 lg:grid-cols-[1fr,auto] lg:items-center">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-union-gold">
+                Join Our Union
+              </p>
+              <h2 className="mt-4 text-3xl font-semibold text-union-navy">
+                Organizing a site or group of workers?
+              </h2>
+              <p className="mt-4 max-w-3xl text-sm leading-7 text-union-steel">
+                Local One welcomes outreach from workers interested in organizing,
+                union representation, and building stronger workplace standards.
+              </p>
+            </div>
+            <Link
+              href="/contact#organize-with-us"
+              className="rounded-full bg-union-navy px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-white transition hover:translate-y-[-1px]"
+            >
+              Organize With Us
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="public-sites" className="section-band pt-0 pb-8 sm:pb-10">
         <div className="container-shell relative z-10">
           <SectionHeading
             eyebrow="Public Site Pages"
@@ -109,7 +134,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section-band pt-0 pb-10 sm:pb-12">
+      <section className="section-band pt-0 pb-8 sm:pb-10">
         <div className="container-shell relative z-10">
           <div className="security-panel mesh-pattern overflow-hidden rounded-[2rem] border border-white/8 p-8 text-white lg:p-10">
             <div className="grid gap-8 lg:grid-cols-[0.9fr,1.1fr]">
@@ -141,32 +166,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section-band pt-0 pb-10 sm:pb-12">
-        <div className="container-shell relative z-10">
-          <div className="card-panel gold-ring grid gap-6 p-8 lg:grid-cols-[1fr,auto] lg:items-center">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-union-gold">
-                Join Our Union
-              </p>
-              <h2 className="mt-4 text-3xl font-semibold text-union-navy">
-                Organizing a site or group of workers?
-              </h2>
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-union-steel">
-                Local One welcomes outreach from workers interested in organizing,
-                union representation, and building stronger workplace standards.
-              </p>
-            </div>
-            <Link
-              href="/contact#organize-with-us"
-              className="rounded-full bg-union-navy px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-white transition hover:translate-y-[-1px]"
-            >
-              Organize With Us
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-band pt-0 pb-10 sm:pb-12">
+      <section className="section-band pt-0 pb-8 sm:pb-10">
         <div className="container-shell relative z-10">
           <HomePortalCallout />
         </div>
@@ -174,33 +174,33 @@ export default function HomePage() {
 
       <section className="section-band pt-0">
         <div className="container-shell relative z-10">
-        <SectionHeading
-          eyebrow="Latest News"
-          title="Announcements that reflect the union’s day-to-day work."
-          copy="The public news feed gives Local One a central place to share bargaining updates, training opportunities, leadership announcements, and community activity."
-        />
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
-          {newsItems.map((item) => (
-            <article
-              key={item.slug}
-              className="card-panel gold-ring relative overflow-hidden p-6"
-            >
-              <div className="absolute inset-x-0 top-0 h-1 bg-union-gold" />
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-union-gold">
-                {item.category}
-              </p>
-              <h3 className="mt-3 text-2xl font-semibold text-union-navy">
-                {item.title}
-              </h3>
-              <p className="mt-3 text-sm font-medium text-union-steel">
-                {item.date}
-              </p>
-              <p className="mt-4 text-sm leading-7 text-union-steel">
-                {item.excerpt}
-              </p>
-            </article>
-          ))}
-        </div>
+          <SectionHeading
+            eyebrow="Latest News"
+            title="Announcements that reflect the union’s day-to-day work."
+            copy="The public news feed gives Local One a central place to share bargaining updates, training opportunities, leadership announcements, and community activity."
+          />
+          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            {newsItems.map((item) => (
+              <article
+                key={item.slug}
+                className="card-panel gold-ring relative overflow-hidden p-6"
+              >
+                <div className="absolute inset-x-0 top-0 h-1 bg-union-gold" />
+                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-union-gold">
+                  {item.category}
+                </p>
+                <h3 className="mt-3 text-2xl font-semibold text-union-navy">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm font-medium text-union-steel">
+                  {item.date}
+                </p>
+                <p className="mt-4 text-sm leading-7 text-union-steel">
+                  {item.excerpt}
+                </p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </div>
